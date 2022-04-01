@@ -1,46 +1,49 @@
 #include <SFML/Graphics.hpp>
 #include<iostream>
 #include<cmath>
+#include"Noise.h"
+using namespace std;
 
-const int sWidth = 600;
-const int sHeight = 600;
-const int nSpacing = 50;
+const int sWidth = 512;
+const int sHeight = 512;
+const int nSpacing = 32;
 
 const int cols = 1 + (sWidth / nSpacing);
 const int rows = 1 + (sHeight / nSpacing);
 
+float fField[cols][rows];
 int nField[cols][rows];
 
-void InitField(){
+
+
+void InitField(float xoff , float yoff){
+    //cout<<"                                                           "<<"\n";
+    Noise noise(10 ,10);
     for(int i = 0 ; i < cols ; i++){
         for(int j = 0 ; j < rows ; j++){
-           if((float) rand()/RAND_MAX <= 0.5){
+            fField[i][j] = noise.CalcNoise(xoff * i , yoff * j);
+
+           if(fField[i][j] < 0.5){
                 nField[i][j] = 0;
             }else{
                 nField[i][j] = 1;
             }
+           //cout<<nField[i][j]<<" ";
         }
+        //cout<<"\n";
     }
 }
+
 
 void DrawField(sf::RenderWindow &win){
 
     for(int i = 0 ; i <= cols ; i++){
         for(int j = 0 ; j <= rows ; j++){
-
-            if(nField[i][j] == 0){
-                sf::CircleShape c;
-                c.setPosition(sf::Vector2f((i * nSpacing) ,(j * nSpacing)));
-                c.setFillColor(sf::Color::White);
-                c.setRadius(1.0f);
-                win.draw(c);
-            }else{
-                sf::CircleShape c;
-                c.setPosition(sf::Vector2f((i * nSpacing) , (j * nSpacing)));
-                c.setFillColor(sf::Color::Black);
-                c.setRadius(1.0f);
-                win.draw(c);
-            }
+            sf::CircleShape c;
+            c.setRadius(1.0f);
+            c.setPosition(sf::Vector2f((i * nSpacing) ,(j * nSpacing)));
+            c.setFillColor(sf::Color(255 * fField[i][j], 255 * fField[i][j], 255 * fField[i][j]));
+            win.draw(c);
         }
     }
 }
@@ -102,6 +105,7 @@ void MarchingSquare(sf::RenderWindow &win){
                 case 7:
                     DrawLine(win , a , d);
                     break;
+
                 case 8:
                     DrawLine(win , a , d);
                     break;
@@ -112,7 +116,6 @@ void MarchingSquare(sf::RenderWindow &win){
 
                 case 10:
                     DrawLine(win , a , b);
-
                     DrawLine(win , d , c);
                     break;
 
@@ -123,6 +126,7 @@ void MarchingSquare(sf::RenderWindow &win){
                 case 12:
                     DrawLine(win , d , b);
                     break;
+
                 case 13:
                     DrawLine(win , b , c);
                     break;
@@ -138,13 +142,23 @@ void MarchingSquare(sf::RenderWindow &win){
     }
 }
 
+float Random(float x) //range : [min, max]
+{
+
+    float r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / x));
+    return r;
+}
+
+
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(sWidth, sHeight), "SFML works!");
     srand( time(NULL) );
 
-    InitField();
+    float xoff = 300, yoff = 300;
+    InitField(xoff , yoff);
+
+    sf::RenderWindow window(sf::VideoMode(sWidth, sHeight), "SFML works!");
 
     while (window.isOpen())
     {
@@ -153,15 +167,24 @@ int main()
         {
             if (evnt.type == sf::Event::Closed)
                 window.close();
+
+
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                window.close();
+
             if(sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-                InitField();
+                xoff += Random(100); yoff += Random(100);
+                InitField(xoff , yoff);
             }
         }
 
-        window.clear(sf::Color(50 , 50 , 50));
+        //xoff += Random(100); yoff += Random(100);
+        //InitField(xoff , yoff);
+
+        window.clear(sf::Color(100 , 100 , 100));
 
         MarchingSquare(window);
-        //DrawField(window);
+        DrawField(window);
 
         window.display();
     }
